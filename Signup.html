@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up</title>
+<style>
+  body {
+    background-color: white;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  .camera-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .rotating-camera {
+    width: 80%;
+    animation: rotateCamera 4s linear infinite;
+  }
+
+  @keyframes rotateCamera {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .form-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  h1 {
+    text-align: center;
+  }
+
+  form {
+    width: 80%;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  input[type="text"],
+  input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+  }
+
+  button {
+    width: 100%;
+    padding: 10px;
+    background-color: lightblue;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  button:hover {
+    background-color: skyblue;
+  }
+
+  a {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    color: blue;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="camera-container">
+      <img src="/static/camera.jpg" alt="Rotating Camera" class="rotating-camera">
+    </div>
+    <div class="form-container">
+      <h1>Sign Up</h1>
+      <form method="POST">
+        Username: <input type="text" name="username" required>
+        Password: <input type="password" name="password" required>
+        <button type="submit">Sign Up</button>
+      </form>
+      <a href="{{ url_for('login') }}">Login</a>
+    </div>
+  </div>
+</body>
+</html>

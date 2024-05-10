@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voter Page</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('/static/voter.jpg');
+            background-size: cover;
+            overflow-y: scroll;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .main-content {
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #ccc;
+            width: 80%;
+            max-width: 800px;
+        }
+        .menu-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .menu {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            display: none;
+        }
+        .menu a {
+            display: block;
+            text-decoration: none;
+            color: #333;
+            padding: 5px 0;
+        }
+        .menu a:hover {
+            background-color: #f0f0f0;
+        }
+        .photo {
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+        .like-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: transparent;
+            cursor: pointer;
+            border: 1px solid #f70000;
+        }
+        .like-btn:hover {
+            color: #ff4500; 
+        }
+        .like-count {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+        .winner-message {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .photo img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            margin: 0 auto; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content" id="mainContent">
+        </div>
+        
+        <div class="menu-icon" onclick="redirectToProfile()">
+            <i class="fas fa-bars fa-2x"></i>
+        </div>
+        
+        <div class="menu" id="menu">
+            <a href="{url_for('profile')}">Profile</a>
+        </div>
+    </div>
+    
+    <div class="winner-message" id="winnerMessage"></div>
+
+    <script>
+        window.onload = function() {
+            updateUploadedPhotos();
+            scheduleWinnerMessage();
+            document.addEventListener('photoUploaded', function() {
+                updateUploadedPhotos();
+            });
+        };
+
+        window.addEventListener('beforeunload', function() {
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                if (key.startsWith('liked_')) {
+                    localStorage.removeItem(key);
+                }
+            }
+        });
+
+        function updateUploadedPhotos() {
+            var mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = '';
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                if (key.includes('uploadedPhoto_')) {
+                    var uploadedPhoto = JSON.parse(localStorage.getItem(key));
+                    var photoDiv = document.createElement('div');
+                    photoDiv.classList.add('photo');
+                    photoDiv.id = 'photo_' + uploadedPhoto.timestamp;
+                    var likeCount = getLikeCount(uploadedPhoto.timestamp);
+                    var liked = localStorage.getItem('liked_' + uploadedPhoto.timestamp) === 'true';
+                    var likeBtnClass = liked ? 'fas' : 'far';
+                    var likeBtnColor = liked ? '#ff4500' : 'transparent';
+                    photoDiv.innerHTML = '<img src="' + uploadedPhoto.url + '" alt="Uploaded Photo">' +
+                                         '<i class="' + likeBtnClass + ' fa-heart like-btn" onclick="toggleLike(' + uploadedPhoto.timestamp + ')" style="color: ' + likeBtnColor + ';"></i>' +
+                                         '<span class="like-count" id="likeCount_' + uploadedPhoto.timestamp + '">' + likeCount + '</span>';
+                    mainContent.appendChild(photoDiv);
+                }
+            }
+        }
+
+        function toggleLike(timestamp) {
+            var likeBtn = document.getElementById('photo_' + timestamp).querySelector('.like-btn');
+            var likeCountSpan = document.getElementById('likeCount_' + timestamp);
+            var likeCountKey = 'likeCount_' + timestamp;
+            var likedKey = 'liked_' + timestamp;
+            var likeCount = parseInt(localStorage.getItem(likeCountKey)) || 0;
+            var liked = localStorage.getItem(likedKey) === 'true';
+            if (!liked) {
+                likeBtn.classList.remove('far');
+                likeBtn.classList.add('fas');
+                likeBtn.style.color = '#ff4500';
+                localStorage.setItem(likedKey, 'true');
+                localStorage.setItem(likeCountKey, likeCount + 1);
+                likeCountSpan.innerText = likeCount + 1;
+            } else {
+                likeBtn.classList.remove('fas');
+                likeBtn.classList.add('far');
+                likeBtn.style.color = 'transparent';
+                localStorage.setItem(likedKey, 'false');
+                localStorage.setItem(likeCountKey, likeCount === 0 ? 0 : likeCount - 1);
+                likeCountSpan.innerText = likeCount === 0 ? 0 : likeCount - 1;
+            }
+        }
+
+        function getLikeCount(timestamp) {
+            var likeCountKey = 'likeCount_' + timestamp;
+            return parseInt(localStorage.getItem(likeCountKey)) || 0;
+        }
+
+        function redirectToProfile() {
+            window.location.href = 'Profile';
+        }
+
+        function scheduleWinnerMessage() {
+            var now = new Date();
+            var millisTillNextDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 16, 41, 0, 0) - now;
+            if (millisTillNextDay < 0) {
+                millisTillNextDay += 86400000;
+            }
+            setTimeout(function() {
+                displayWinnerMessage();
+                setInterval(function() {
+                    displayWinnerMessage();
+                }, 24 * 60 * 60 * 1000);
+            }, millisTillNextDay);
+        }
+        window.onload = function() {
+            updateUploadedPhotos();
+            scheduleWinnerMessage();
+            displayWinnerMessage();
+            document.addEventListener('photoUploaded', function() {
+                updateUploadedPhotos();
+            });
+        };
+
+        function displayWinnerMessage() {
+            var winnerMessage = document.getElementById('winnerMessage');
+            var highestLikes = 0;
+            var winnerPhoto = null;
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                if (key.includes('uploadedPhoto_')) {
+                    var uploadedPhoto = JSON.parse(localStorage.getItem(key));
+                    var likeCount = getLikeCount(uploadedPhoto.timestamp);
+                    if (likeCount > highestLikes) {
+                        highestLikes = likeCount;
+                        winnerPhoto = uploadedPhoto;
+                    }
+                }
+            }
+            if (winnerPhoto) {
+                winnerMessage.innerText = "Today's winner is " + winnerPhoto.username + "!";
+                winnerMessage.style.display = 'block';
+            } else {
+                winnerMessage.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Upload</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('/static/photoupload.jpg');
+            background-size: cover;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .section {
+            margin-bottom: 20px;
+            background-color: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .section-text {
+            margin-right: 10px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .icon {
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 24px;
+        }
+        .dialogue-box {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        .upload-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .upload-message {
+            margin-top: 10px;
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section">
+            <div class="section-text">Home</div>
+            <i class="fas fa-home icon" onclick="redirectTo('Profile')"></i>
+        </div>
+        <div class="dialogue-box">
+            <h2>Upload Photo</h2>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username">
+            <input type="file" accept="image/*" id="fileInput">
+            <button class="upload-btn" onclick="uploadPhoto()">Submit</button>
+            <p class="upload-message" id="uploadMessage"></p>
+        </div>
+    </div>
+
+    <script>
+        function redirectTo(page) {
+            window.location.href = page;
+        }
+
+        function isFilenameExists(filename) {
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                if (key.includes('uploadedPhoto_')) {
+                    var uploadedPhoto = JSON.parse(localStorage.getItem(key));
+                    if (uploadedPhoto.filename === filename) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function uploadPhoto() {
+            var username = document.getElementById('username').value;
+            var fileInput = document.getElementById('fileInput');
+            var file = fileInput.files[0];
+            var reader = new FileReader();
+            
+            reader.onload = function(event) {
+                var photoURL = event.target.result;
+                var timestamp = new Date().getTime();
+                var expirationTime = new Date();
+                if (expirationTime.getHours() >= 16 && expirationTime.getMinutes() >= 45) { 
+                    expirationTime.setDate(expirationTime.getDate() + 1);
+                    expirationTime.setHours(16);
+                    expirationTime.setMinutes(45);
+                } else {
+                    expirationTime.setHours(16);
+                    expirationTime.setMinutes(45);
+                }
+
+                var filename = file.name;
+                if (isFilenameExists(filename)) {
+                    document.getElementById('uploadMessage').innerText = 'Photo already exists!';
+                    return;
+                }
+
+                localStorage.setItem('uploadedPhoto_' + timestamp, JSON.stringify({
+                    url: photoURL,
+                    timestamp: timestamp,
+                    username: username,
+                    expirationTime: expirationTime,
+                    filename: filename
+                }));
+                
+                document.getElementById('uploadMessage').innerText = 'Photo uploaded successfully!';
+                var event = new Event('photoUploaded');
+                document.dispatchEvent(event);
+            }
+            
+            reader.readAsDataURL(file);
+        }
+
+        function deleteExpiredPhotos() {
+            var now = new Date();
+            if (now.getHours() === 17 && now.getMinutes() === 9) {
+                for (var i = 0; i < localStorage.length; i++) {
+                    var key = localStorage.key(i);
+                    if (key.includes('uploadedPhoto_')) {
+                        var uploadedPhoto = JSON.parse(localStorage.getItem(key));
+                        var uploadTime = new Date(uploadedPhoto.timestamp);
+                        if (uploadTime.getHours() < 17 || (uploadTime.getHours() === 16 && uploadTime.getMinutes() <= 9)) {
+                            localStorage.removeItem(key);
+                        }
+                    }
+                }
+            }
+        }
+
+        setInterval(deleteExpiredPhotos, 60000);
+    </script>
+</body>
+</html>
